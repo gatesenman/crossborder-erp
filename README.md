@@ -4,19 +4,19 @@
 
 ## 界面截图
 
-![经营概览](src/erp/screenshots/02-dashboard.png)
+![经营概览](screenshots/02-dashboard.png)
 
 *经营概览 / Dashboard*
 
-![商品 SKU](src/erp/screenshots/03-products-sku.png)
+![商品 SKU](screenshots/03-products-sku.png)
 
 *商品 SKU / Product SKUs*
 
-![订单](src/erp/screenshots/04-orders.png)
+![订单](screenshots/04-orders.png)
 
 *订单 / Orders*
 
-![财务利润](src/erp/screenshots/08-finance-profit.png)
+![财务利润](screenshots/08-finance-profit.png)
 
 *财务利润 / Finance / profit*
 
@@ -30,27 +30,26 @@
 
 ## 技术栈
 
-- 前端：TypeScript + Vite（`src/erp/web`）
-- 后端：TypeScript（`src/erp/server`，tsx 启动）
+- 前端：TypeScript + Vite（`web`）
+- 后端：TypeScript（`server`，tsx 启动）
 
 ## 从源码运行
 
-源码在 `src/erp/`。本仓库不包含安装包。路径相对于该目录（不要使用文档里可能出现的 `/workspace/erp`）。
+源码在仓库根目录。本仓库不包含安装包。路径相对于仓库根目录（不要使用文档里可能出现的 `/workspace/erp`）。
 
 ```bash
-cd src/erp/server && npm install
+cd server && npm install
 cd ../web && npm install && npm run build    # 产物到 web/dist
 
 cd ../server
 npx tsx src/seed.ts     # 初始化演示数据（会重建 server/data/erp.db）
 npx tsx src/index.ts    # API 与前端静态页共用 8800 端口
 ```
-
-然后访问 http://localhost:8800 。演示账号见 `src/erp/README.md`。
+然后访问 http://localhost:8800 。演示账号见 `README.original.md`。
 
 ## 文档
 
-- [源码 README](src/erp/README.md)
+- [源码 README](README.original.md)
 
 ---
 
@@ -62,19 +61,19 @@ A cross-border e-commerce ERP covering products, orders, purchasing, warehousing
 
 ## Screenshots
 
-![Dashboard](src/erp/screenshots/02-dashboard.png)
+![Dashboard](screenshots/02-dashboard.png)
 
 *经营概览 / Dashboard*
 
-![Product SKUs](src/erp/screenshots/03-products-sku.png)
+![Product SKUs](screenshots/03-products-sku.png)
 
 *商品 SKU / Product SKUs*
 
-![Orders](src/erp/screenshots/04-orders.png)
+![Orders](screenshots/04-orders.png)
 
 *订单 / Orders*
 
-![Finance / profit](src/erp/screenshots/08-finance-profit.png)
+![Finance / profit](screenshots/08-finance-profit.png)
 
 *财务利润 / Finance / profit*
 
@@ -88,25 +87,24 @@ A cross-border e-commerce ERP covering products, orders, purchasing, warehousing
 
 ## Tech stack
 
-- 前端：TypeScript + Vite（`src/erp/web`）
-- 后端：TypeScript（`src/erp/server`，tsx 启动）
+- 前端：TypeScript + Vite（`web`）
+- 后端：TypeScript（`server`，tsx 启动）
 
 ## Getting started
 
-Source is under `src/erp/`. This repository does not include installers. Paths are relative to that tree (ignore any `/workspace/erp` prefixes in older notes).
+Source is at the repository root. This repository does not include installers. Paths are relative to the repository root (ignore any `/workspace/erp` prefixes in older notes).
 
 ```bash
-cd src/erp/server && npm install
+cd server && npm install
 cd ../web && npm install && npm run build    # output in web/dist
 
 cd ../server
 npx tsx src/seed.ts     # seeds demo data (rebuilds server/data/erp.db)
 npx tsx src/index.ts    # API and static UI share port 8800
 ```
-
-Open http://localhost:8800 . Demo accounts are listed in `src/erp/README.md`.
+Open http://localhost:8800 . Demo accounts are listed in `README.original.md`.
 
 ## Documentation
 
-- [源码 README](src/erp/README.md)
+- [源码 README](README.original.md)
 
