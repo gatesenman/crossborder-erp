@@ -45,11 +45,25 @@ cd ../server
 npx tsx src/seed.ts     # 初始化演示数据（会重建 server/data/erp.db）
 npx tsx src/index.ts    # API 与前端静态页共用 8800 端口
 ```
-然后访问 http://localhost:8800 。演示账号见 `README.original.md`。
+然后访问 http://localhost:8800 。演示账号：
+
+| 账号 | 密码 | 角色 |
+|---|---|---|
+| admin | admin123 | 系统管理员 |
+| zhangxiao / liwen | 123456 | 运营 |
+| zhoucg | 123456 | 采购 |
+| liucang | 123456 | 仓管 |
+| chencw | 123456 | 财务 |
 
 ## 文档
 
-- [源码 README](README.original.md)
+## 贡献
+
+欢迎通过 Issue 和 Pull Request 参与，详见 [CONTRIBUTING.md](CONTRIBUTING.md)。安全问题请按 [SECURITY.md](SECURITY.md) 私下报告。参与时请遵守 [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md)。
+
+## 许可证
+
+本仓库尚未附带 LICENSE 文件，许可证未指定。
 
 ---
 
@@ -102,9 +116,22 @@ cd ../server
 npx tsx src/seed.ts     # seeds demo data (rebuilds server/data/erp.db)
 npx tsx src/index.ts    # API and static UI share port 8800
 ```
-Open http://localhost:8800 . Demo accounts are listed in `README.original.md`.
+Open http://localhost:8800 . Demo accounts:
+
+| Account | Password | Role |
+|---|---|---|
+| admin | admin123 | administrator |
+| zhangxiao / liwen | 123456 | operations |
+| zhoucg | 123456 | purchasing |
+| liucang | 123456 | warehouse |
+| chencw | 123456 | finance |
 
 ## Documentation
 
-- [源码 README](README.original.md)
+## Contributing
 
+Issues and pull requests are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md). Please report vulnerabilities privately via [SECURITY.md](SECURITY.md). This project follows [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md).
+
+## License
+
+No LICENSE file is included in this repository; the license is unspecified.
