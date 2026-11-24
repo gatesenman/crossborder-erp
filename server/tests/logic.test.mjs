@@ -63,3 +63,19 @@ test('missing or invalid FX fails instead of silently pricing foreign money as C
  assert.throws(()=>logic.calcOrderProfit(1),/缺少有效汇率/);
  assert.equal(db.prepare('SELECT profit_cny FROM orders WHERE id=1').get().profit_cny,123);
 });
+test('stock + ledger are atomic even if ledger insertion fails',()=>{
+ assert.equal(logic.adjustStock(1,1,5,'入库','in'),5);
+ db.exec("CREATE TRIGGER fail_ledger BEFORE INSERT ON inventory_ledger BEGIN SELECT RAISE(ABORT,'ledger unavailable'); END");
+ try {
+  assert.throws(()=>logic.adjustStock(1,1,-2,'出库','out'),/ledger unavailable/);
+  assert.equal(db.prepare('SELECT qty_available FROM inventory').get().qty_available,5);
+  assert.equal(db.prepare('SELECT COUNT(*) AS n FROM inventory_ledger').get().n,1);
+ } finally { db.exec('DROP TRIGGER fail_ledger'); }
+ assert.throws(()=>logic.adjustStock(1,1,-6,'出库','out'),/库存不足/);
+ for (const invalid of [NaN,Infinity,0.5,Number.MAX_SAFE_INTEGER+1])
+  assert.throws(()=>logic.adjustStock(1,1,invalid,'入库','bad'),/安全整数/);
+ assert.equal(db.prepare('SELECT qty_available FROM inventory').get().qty_available,5);
+ // Native nested savepoints also roll back with an enclosing transaction.
+ assert.throws(()=>db.transaction(()=>{logic.adjustStock(1,1,1,'入库','nested');throw Error('outer');})(),/outer/);
+ assert.equal(db.prepare('SELECT qty_available FROM inventory').get().qty_available,5);
+});

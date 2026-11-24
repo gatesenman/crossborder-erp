@@ -84,14 +84,18 @@ export function ensureInv(whId: number, skuId: number) {
 
 /** 库存变动 + 写入库存流水 */
 export function adjustStock(whId: number, skuId: number, delta: number, type: string, refNo: string, remark = '', operator = 'system') {
+  if (!Number.isSafeInteger(delta)) throw new Error('库存变动必须为安全整数');
+  return db.transaction(() => {
   const inv = ensureInv(whId, skuId);
   const before = inv.qty_available;
   const after = before + delta;
+  if (!Number.isSafeInteger(after)) throw new Error('库存超出安全整数范围');
   if (after < 0) throw new Error(`库存不足：当前可用 ${before}，需扣减 ${-delta}`);
   db.prepare('UPDATE inventory SET qty_available=? WHERE id=?').run(after, inv.id);
   db.prepare('INSERT INTO inventory_ledger(warehouse_id, sku_id, type, qty, before_qty, after_qty, ref_no, remark, operator, created_at) VALUES(?,?,?,?,?,?,?,?,?,?)')
     .run(whId, skuId, type, delta, before, after, refNo, remark, operator, now());
   return after;
+  })();
 }
 
 /** 按头程运费分摊方式分摊到货件明细，并回写SKU头程单价 */
