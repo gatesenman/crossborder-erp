@@ -52,3 +52,14 @@ test('combo cycles fail explicitly; shared children are not cycles',()=>{
  run('INSERT INTO combo_items(combo_sku_id,sku_id,qty) VALUES(2,2,1)');
  assert.throws(()=>logic.skuUnitCost(2),/组合SKU循环引用/);
 });
+test('missing or invalid FX fails instead of silently pricing foreign money as CNY',()=>{
+ assert.equal(logic.rateOf('USD'),7); assert.equal(logic.rateOf('CNY'),1);
+ assert.throws(()=>logic.rateOf('EUR'),/缺少有效汇率/);
+ for (const value of [0,-1,null]) {
+  run("UPDATE exchange_rates SET rate_to_cny=? WHERE currency='USD'",value);
+  assert.throws(()=>logic.rateOf('USD'),/缺少有效汇率/);
+ }
+ run("INSERT INTO orders(id,order_no,store_id,fulfillment,currency,profit_cny) VALUES(1,'o1',1,'FBM','EUR',123)");
+ assert.throws(()=>logic.calcOrderProfit(1),/缺少有效汇率/);
+ assert.equal(db.prepare('SELECT profit_cny FROM orders WHERE id=1').get().profit_cny,123);
+});

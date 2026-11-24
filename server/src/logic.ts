@@ -18,7 +18,9 @@ export function genNo(prefix: string) {
 
 export function rateOf(currency: string): number {
   const r = db.prepare('SELECT rate_to_cny FROM exchange_rates WHERE currency=?').get(currency) as any;
-  return r ? r.rate_to_cny : 1;
+  if (!r || !Number.isFinite(r.rate_to_cny) || r.rate_to_cny <= 0)
+    throw new Error(`缺少有效汇率: ${currency}`);
+  return r.rate_to_cny;
 }
 
 /** 单件落地成本（CNY）= 采购成本 + 头程分摊 + 包材；组合SKU按子件求和 */
