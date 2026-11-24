@@ -102,17 +102,37 @@ export function adjustStock(whId: number, skuId: number, delta: number, type: st
 export function allocateFreight(shipmentId: number, updateSku = true) {
   const sh = db.prepare('SELECT * FROM fba_shipments WHERE id=?').get(shipmentId) as any;
   const items = db.prepare('SELECT i.*, s.weight, s.length, s.width, s.height FROM fba_shipment_items i LEFT JOIN skus s ON s.id=i.sku_id WHERE shipment_id=?').all(shipmentId) as any[];
+  if (!sh) throw new Error('货件不存在');
+  if (!Number.isFinite(sh.total_freight) || sh.total_freight < 0)
+    throw new Error('头程运费必须为非负有限数');
+  if (!items.length) return [];
+  for (const i of items) if (!Number.isSafeInteger(i.qty) || i.qty <= 0)
+    throw new Error('货件数量必须为正整数');
   const basis = (i: any) => sh.alloc_method === '按体积' ? (i.length * i.width * i.height) * i.qty : sh.alloc_method === '按数量' ? i.qty : (i.weight || 0) * i.qty;
-  const totalBasis = items.reduce((a, i) => a + basis(i), 0) || 1;
-  const upd = db.prepare('UPDATE fba_shipment_items SET alloc_freight=? WHERE id=?');
-  const updSku = db.prepare('UPDATE skus SET freight_cost=? WHERE id=?');
-  const res = items.map(i => {
-    const amt = +(sh.total_freight * basis(i) / totalBasis).toFixed(2);
-    upd.run(amt, i.id);
-    if (updateSku && i.qty > 0) updSku.run(+(amt / i.qty).toFixed(2), i.sku_id);
-    return { id: i.id, sku_id: i.sku_id, alloc_freight: amt, unit: i.qty ? +(amt / i.qty).toFixed(2) : 0 };
-  });
-  return res;
+  let bases = items.map(basis);
+  if (bases.some(x => !Number.isFinite(x) || x < 0)) throw new Error('分摊依据无效');
+  // Missing measurements must not silently discard the entire freight cost.
+  if (bases.every(x => x === 0)) bases = items.map(i => i.qty);
+  const totalBasis = bases.reduce((a, b) => a + b, 0);
+  const cents = Math.round(sh.total_freight * 100);
+  if (!Number.isSafeInteger(cents)) throw new Error('头程运费超出安全范围');
+  const shares = bases.map(b => cents * (b / totalBasis));
+  const allocated = shares.map(Math.floor);
+  const order = shares.map((s, i) => ({ i, remainder: s - allocated[i] }))
+    .sort((a, b) => b.remainder - a.remainder || items[a.i].id - items[b.i].id);
+  const leftover = cents - allocated.reduce((a, b) => a + b, 0);
+  for (let i = 0; i < leftover; i++) allocated[order[i].i]++;
+  return db.transaction(() => {
+    const upd = db.prepare('UPDATE fba_shipment_items SET alloc_freight=? WHERE id=?');
+    const updSku = db.prepare('UPDATE skus SET freight_cost=? WHERE id=?');
+    return items.map((i, index) => {
+      const amt = allocated[index] / 100;
+      upd.run(amt, i.id);
+      const unit = +(amt / i.qty).toFixed(2);
+      if (updateSku) updSku.run(unit, i.sku_id);
+      return { id: i.id, sku_id: i.sku_id, alloc_freight: amt, unit };
+    });
+  })();
 }
 
 export function log(user: string, module: string, action: string, detail: string, ip = '127.0.0.1') {

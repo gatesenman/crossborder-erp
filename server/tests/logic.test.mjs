@@ -79,3 +79,20 @@ test('stock + ledger are atomic even if ledger insertion fails',()=>{
  assert.throws(()=>db.transaction(()=>{logic.adjustStock(1,1,1,'入库','nested');throw Error('outer');})(),/outer/);
  assert.equal(db.prepare('SELECT qty_available FROM inventory').get().qty_available,5);
 });
+test('freight allocation conserves cents, falls back for zero weights, rolls back failures',()=>{
+ run("INSERT INTO fba_shipments(id,total_freight,alloc_method) VALUES(1,10,'按数量')");
+ for(let i=1;i<=3;i++) run('INSERT INTO fba_shipment_items(id,shipment_id,sku_id,qty) VALUES(?,1,1,1)',i);
+ assert.deepEqual(logic.allocateFreight(1,false).map(x=>x.alloc_freight),[3.34,3.33,3.33]);
+ run("UPDATE fba_shipments SET alloc_method='按重量'"); run('UPDATE skus SET weight=0');
+ assert.deepEqual(logic.allocateFreight(1,false).map(x=>x.alloc_freight),[3.34,3.33,3.33]);
+ run('UPDATE fba_shipments SET total_freight=20');
+ db.exec("CREATE TRIGGER fail_alloc BEFORE UPDATE ON fba_shipment_items WHEN NEW.id=2 BEGIN SELECT RAISE(ABORT,'alloc unavailable'); END");
+ try {
+  assert.throws(()=>logic.allocateFreight(1),/alloc unavailable/);
+  assert.equal(db.prepare('SELECT alloc_freight FROM fba_shipment_items WHERE id=1').get().alloc_freight,3.34);
+  assert.equal(db.prepare('SELECT freight_cost FROM skus WHERE id=1').get().freight_cost,0);
+ } finally { db.exec('DROP TRIGGER fail_alloc'); }
+ assert.throws(()=>logic.allocateFreight(999),/货件不存在/);
+ run('UPDATE fba_shipment_items SET qty=0 WHERE id=1');
+ assert.throws(()=>logic.allocateFreight(1),/正整数/);
+});
