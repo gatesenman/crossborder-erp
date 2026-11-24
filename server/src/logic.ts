@@ -58,7 +58,7 @@ export function calcOrderProfit(orderId: number) {
   const total = goods > 0 ? goods : o.total_amount;
   const revenue = total + (o.shipping_income || 0);
   const platformFee = +(revenue * (PLATFORM_FEE_RATE[o.platform] ?? 0.1)).toFixed(2);
-  const fbaFee = o.fulfillment === 'FBA' ? +(((3.2 + weight * 1.8) * units) * usdRate / rate).toFixed(2) : 0;
+  const fbaFee = o.fulfillment === 'FBA' ? +((3.2 * units + weight * 1.8) * usdRate / rate).toFixed(2) : 0;
   let freight = 0;
   if (o.fulfillment !== 'FBA' && o.channel_id) {
     const ch = db.prepare('SELECT * FROM logistics_channels WHERE id=?').get(o.channel_id) as any;
