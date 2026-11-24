@@ -22,13 +22,15 @@ export function rateOf(currency: string): number {
 }
 
 /** 单件落地成本（CNY）= 采购成本 + 头程分摊 + 包材；组合SKU按子件求和 */
-export function skuUnitCost(skuId: number): { cost: number; weight: number } {
+export function skuUnitCost(skuId: number, ancestors = new Set<number>()): { cost: number; weight: number } {
+  if (ancestors.has(skuId)) throw new Error(`组合SKU循环引用: ${skuId}`);
+  const path = new Set(ancestors).add(skuId);
   const s = db.prepare('SELECT * FROM skus WHERE id=?').get(skuId) as any;
   if (!s) return { cost: 0, weight: 0 };
   if (s.is_combo) {
     const items = db.prepare('SELECT * FROM combo_items WHERE combo_sku_id=?').all(skuId) as any[];
     let cost = s.packaging_cost || 0, weight = 0;
-    for (const it of items) { const c = skuUnitCost(it.sku_id); cost += c.cost * it.qty; weight += c.weight * it.qty; }
+    for (const it of items) { const c = skuUnitCost(it.sku_id, path); cost += c.cost * it.qty; weight += c.weight * it.qty; }
     return { cost, weight };
   }
   return { cost: (s.purchase_cost || 0) + (s.freight_cost || 0) + (s.packaging_cost || 0), weight: s.weight || 0 };

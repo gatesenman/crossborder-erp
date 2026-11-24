@@ -42,3 +42,13 @@ test('FBA charges total shipment weight once, not once per unit',()=>{
  assert.equal(result.fbaFee,8.2); // 3.2*2 + 1kg*1.8
  assert.equal(db.prepare('SELECT fba_fee FROM orders WHERE id=1').get().fba_fee,8.2);
 });
+test('combo cycles fail explicitly; shared children are not cycles',()=>{
+ run("INSERT INTO skus(id,sku,name,is_combo,packaging_cost) VALUES(2,'kit','kit',1,1),(3,'outer','outer',1,0)");
+ run('INSERT INTO combo_items(combo_sku_id,sku_id,qty) VALUES(2,1,2),(3,2,1),(3,1,1)');
+ assert.deepEqual(logic.skuUnitCost(3),{cost:31,weight:1.5});
+ run('INSERT INTO combo_items(combo_sku_id,sku_id,qty) VALUES(2,3,1)');
+ assert.throws(()=>logic.skuUnitCost(3),/组合SKU循环引用/);
+ run('DELETE FROM combo_items');
+ run('INSERT INTO combo_items(combo_sku_id,sku_id,qty) VALUES(2,2,1)');
+ assert.throws(()=>logic.skuUnitCost(2),/组合SKU循环引用/);
+});
